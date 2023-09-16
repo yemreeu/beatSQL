@@ -1,5 +1,7 @@
-
+	
 --drop table temp_sure
+
+--Analiz onay süresi kısmında geçen süreleri hariç tutmak için hesaplayıp geçici bir tabloda depolanıyor.
 CREATE TEMP TABLE temp_sure
   (
      request_id INT,
@@ -23,19 +25,21 @@ order by request_id;
 
 SELECT * FROM temp_sure
 
+
+-- Sonuc adında bir geçici tablo oluşturulur ve "Ortalama Gün (Aylık)" kolonu burada hesaplanır.
 --drop table sonuc
 CREATE TEMP TABLE sonuc
   (
      request_id INT,
-	 ay text,
-	  tamamlanma_suresi_gun INT,
-	  ortalama_gun_yillik INT
+	ay text,
+	tamamlanma_suresi_gun INT,
+	ortalama_gun_yillik INT
   );
 INSERT INTO sonuc
 SELECT 
 	filtered_data.request_id,
 	TO_CHAR(MAX(CAST(filtered_data.bitis_tarihi AS DATE)), 'Month YYYY')  as ay,
-    (EXTRACT(DAY FROM MAX(bitis_tarihi) - MIN(baslangic_tarihi))) - MAX(temp_sure.analiz_onayi_suresi) as tamamlanma_suresi_aylik,
+    	(EXTRACT(DAY FROM MAX(bitis_tarihi) - MIN(baslangic_tarihi))) - MAX(temp_sure.analiz_onayi_suresi) as tamamlanma_suresi_aylik,
 	(EXTRACT(DAY FROM MAX(bitis_tarihi) - MIN(baslangic_tarihi))) - MAX(temp_sure.analiz_onayi_suresi) as tamamlanma_suresi_yillik
 	
 FROM (
@@ -54,31 +58,7 @@ order by 2
 
 select * from sonuc
 
-WITH result AS (
-    SELECT 
-        ay, 
-        AVG(tamamlanma_suresi_gun) as Ortalama_Gün_Aylık,
-	count(ay) as satırSayısı,
-	count(ay) * AVG(tamamlanma_suresi_gun) as toplam,
-        ROW_NUMBER() OVER (ORDER BY TO_DATE(CONCAT('01-', ay, ' 2000'), 'DD-Month YYYY')) as RowNum
-    FROM Sonuc
-    GROUP BY ay
-)
-
-
-SELECT 
-    r.ay,
-    r.Ortalama_Gün_Aylık,
-    (
-        1
-    ) as Yıllık_Ortalama
-FROM result r
-ORDER BY r.RowNum;
-
-
-
-
-
+-- Son olarak resultv2 tablosu oluşturularak "Ortalama Gün (Yıllık)" kolonu hesaplanıp tabloya eklenir.
 select * into resultv2 from (
  SELECT 
         ay, 
@@ -111,6 +91,6 @@ SET toplamsatırsayısı = (
     WHERE t2.rownum <= resultv2.rownum
 );
 
-
+-- Sadece aşağıdaki select sorgusu ile sonuç gözlemlenebilir.
 select ay,ortalama_gün_aylık,sonuc/toplamsatırsayısı as ortalama_gun_yillik from resultv2
 
