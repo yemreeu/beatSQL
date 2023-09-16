@@ -92,5 +92,5 @@ SET toplamsatırsayısı = (
 );
 
 -- Sadece aşağıdaki select sorgusu ile sonuç gözlemlenebilir.
-select ay,ortalama_gün_aylık,sonuc/toplamsatırsayısı as ortalama_gun_yillik from resultv2
+select ay,cast(ortalama_gün_aylık as int),cast((sonuc/toplamsatırsayısı) as int)as ortalama_gun_yillik from resultv2
 
